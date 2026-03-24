@@ -1,34 +1,20 @@
+ ```markdown
 # Scalable Task Platform
 
-An end-to-end DevOps project that shows how a task application can be containerized, deployed, automated, scaled, and monitored using Docker, GitHub Actions, Terraform, Kubernetes, Prometheus, and Grafana.
+An end-to-end DevOps project that shows how a task application can be containerized, automated, deployed, scaled, and monitored.
 
-## Project Overview
+## Stack
 
-This repository documents the step-by-step development of a scalable task platform designed to reflect real DevOps workflows. The project starts from a simple backend service and will grow into a fully containerized, automated, cloud-ready, and observable platform.
+- Node.js
+- Express
+- Docker
+- GitHub Actions
+- Terraform
+- Kubernetes
+- Prometheus
+- Grafana
 
-The goal is not just to build a task application, but to demonstrate how modern DevOps practices are applied across the full software delivery lifecycle.
-
-## What This Project Demonstrates
-
-- Containerization with Docker
-- Continuous Integration and Delivery with GitHub Actions
-- Infrastructure provisioning with Terraform
-- Kubernetes-based orchestration
-- Monitoring and observability with Prometheus and Grafana
-- Progressive project documentation through weekly implementation updates
-
-## Planned Stack
-
-- Backend: Node.js + Express
-- Frontend: to be added
-- Database: PostgreSQL
-- Containerization: Docker
-- CI/CD: GitHub Actions
-- Infrastructure: Terraform
-- Orchestration: Kubernetes
-- Monitoring: Prometheus and Grafana
-
-## Project Roadmap
+## Roadmap
 
 - [Week 1: Project foundation and backend setup](docs/week-1-update.md)
 - Week 2: Dockerize the backend
@@ -39,25 +25,10 @@ The goal is not just to build a task application, but to demonstrate how modern 
 - Week 7: Cloud deployment
 - Week 8: Kubernetes deployment
 - Week 9: Monitoring with Prometheus and Grafana
-- Week 10: Hardening, documentation, and portfolio polish
+- Week 10: Hardening and project polish
 
 ## Current Status
 
-Week 1: Project foundation in progress
-
-## Weekly Updates
-
-Project progress will be documented week by week in the `docs` folder.
-
-- [Week 1 Update](docs/week-1-update.md)
-
-## Repository Structure
-
-```text
-scalable-task-platform/
-├── app/
-│   ├── backend/
-│   └── frontend/
-├── docs/
-│   └── week-1-update.md
-└── README.md
+- Week 1 completed
+- Backend validated locally
+- Ready for Week 2

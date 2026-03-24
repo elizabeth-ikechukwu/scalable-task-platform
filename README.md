@@ -1,7 +1,8 @@
- ```markdown
 # Scalable Task Platform
 
-An end-to-end DevOps project that shows how a task application can be containerized, automated, deployed, scaled, and monitored.
+## Project Overview
+
+A hands-on DevOps project that documents how a task application is built and managed step by step using real workflow practices. The project starts with a simple backend service and will grow into a containerized, automated, cloud-ready, and observable platform.
 
 ## Stack
 

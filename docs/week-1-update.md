@@ -1,55 +1,43 @@
 # Week 1 — Project Foundation and Backend Setup
 
-1. Install Node.js and restart your computer
+## What I Built
+A production-structured REST API backend for the Scalable Task Platform using Node.js and Express.
 
-2. Verify installation
+## Technical Decisions
+- Used dotenv for environment variable management instead of hardcoding values
+- Structured error handling with a 404 handler and global error handler
+- In-memory task store as a foundation before database integration in later weeks
 
-   `node -v`  
-   `npm.cmd -v`
+## API Endpoints
 
-3. Create `app/backend`, `app/frontend`, and `docs`
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | / | API health check |
+| GET | /health | Returns status and uptime |
+| GET | /tasks | Returns all tasks |
+| POST | /tasks | Creates a new task |
+| PATCH | /tasks/:id | Toggles task complete or incomplete |
+| DELETE | /tasks/:id | Deletes a task |
 
-4. Create `server.js` and `package.json` inside the backend folder
-
-5. Create and update project documentation:
-   - `README.md`
-   - `docs/week-1-update.md`
-
-6. Install dependencies
-
-   `cd app\backend`  
-   `npm.cmd install`
-
-   This creates:
-   - `node_modules/`
-   - `package-lock.json`
-
-7. Start the server
-
-   `node server.js`
-
-   You should see:
-
-   `Server running on port 3000`
-
-8. Test the API — open in your browser
-
-   `http://localhost:3000`  
-   `http://localhost:3000/health`
-
-   You should see:
-   - `/` → `Task backend is running`
-   - `/health` → `{"status":"healthy"}`
+## Project Structure
+```
+scalable-task-platform/
+├── app/
+│   └── backend/
+│       ├── server.js
+│       ├── package.json
+│       ├── .env.example
+│       └── .gitignore
+└── docs/
+    └── week-1-update.md
+```
 
 ## Outcome
-
-✅ Node.js installed successfully  
-✅ Project structure created  
-✅ Backend files created  
-✅ Dependencies installed  
-✅ Backend working locally  
-✅ Health endpoint returning healthy response  
+- Node.js and Express backend running on port 3000
+- Full CRUD API validated with Postman
+- Environment variables managed with dotenv
+- Branch based Git workflow established
+- Code pushed and merged via pull request on GitHub
 
 ## Next Step
-
-Week 2: Dockerize the backend service
+Week 2: Containerize the backend with Docker

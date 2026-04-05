@@ -27,8 +27,8 @@ Built in public, one week at a time.
 ## Roadmap
 | Week | Topic | Status |
 |------|-------|--------|
-| 1 | Project foundation and backend setup | Done |
-| 2 | Dockerize the backend | In Progress |
+| 1 | Project foundation and backend setup | [Done](docs/week-1-update.md) |
+| 2 | Dockerize the backend | [Done](docs/week-2-update.md) |
 | 3 | Add frontend and Docker Compose | Upcoming |
 | 4 | CI with GitHub Actions | Upcoming |
 | 5 | CD workflow and image registry | Upcoming |

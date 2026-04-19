@@ -1,0 +1,244 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 424522917561.dkr.ecr.us-east-1.amazonaws.com
+  DOCKERHUB_REGISTRY: lizzycloudlab
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: app/backend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: app/backend
+        run: npx eslint . --ext .js --max-warnings=0
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: app/backend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: app/backend
+        run: npm test
+
+  build-and-integration-test:
+    name: Build & Integration Test
+    runs-on: ubuntu-latest
+    needs: unit-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/backend
+          file: ./app/backend/Dockerfile
+          push: false
+          load: true
+          tags: task-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/frontend
+          file: ./app/frontend/Dockerfile
+          push: false
+          load: true
+          tags: task-frontend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for backend to be healthy
+        run: |
+          echo "Waiting for backend health..."
+          for i in $(seq 1 15); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' task-backend 2>/dev/null || echo "not_found")
+            echo "Attempt $i: backend = $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Backend is healthy."
+              break
+            fi
+            if [ "$i" = "15" ]; then
+              echo "Backend did not become healthy in time."
+              docker compose logs backend
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Wait for frontend to be healthy
+        run: |
+          echo "Waiting for frontend health..."
+          for i in $(seq 1 15); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' task-frontend 2>/dev/null || echo "not_found")
+            echo "Attempt $i: frontend = $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Frontend is healthy."
+              break
+            fi
+            if [ "$i" = "15" ]; then
+              echo "Frontend did not become healthy in time."
+              docker compose logs frontend
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Assert backend health endpoint
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health)
+          echo "GET /api/health returned: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "FAILED: expected 200, got $HTTP_STATUS"
+            docker compose logs
+            exit 1
+          fi
+          echo "PASSED"
+
+      - name: Assert frontend serves 200
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
+          echo "GET / returned: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "FAILED: expected 200, got $HTTP_STATUS"
+            docker compose logs
+            exit 1
+          fi
+          echo "PASSED"
+
+      - name: Print logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose down --volumes
+
+  publish:
+    name: Publish Images
+    runs-on: ubuntu-latest
+    needs: build-and-integration-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract short SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::424522917561:role/github-actions-scalable-task-platform
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/backend
+          file: ./app/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/task-backend:latest
+            ${{ env.ECR_REGISTRY }}/task-backend:sha-${{ steps.vars.outputs.sha }}
+            ${{ env.DOCKERHUB_REGISTRY }}/task-backend:latest
+            ${{ env.DOCKERHUB_REGISTRY }}/task-backend:sha-${{ steps.vars.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app/frontend
+          file: ./app/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/task-frontend:latest
+            ${{ env.ECR_REGISTRY }}/task-frontend:sha-${{ steps.vars.outputs.sha }}
+            ${{ env.DOCKERHUB_REGISTRY }}/task-frontend:latest
+            ${{ env.DOCKERHUB_REGISTRY }}/task-frontend:sha-${{ steps.vars.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Job summary
+        run: |
+          echo "### Published Images - $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**ECR**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.ECR_REGISTRY }}/task-backend:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.ECR_REGISTRY }}/task-backend:sha-${{ steps.vars.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.ECR_REGISTRY }}/task-frontend:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.ECR_REGISTRY }}/task-frontend:sha-${{ steps.vars.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Hub**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-backend:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-backend:sha-${{ steps.vars.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-frontend:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-frontend:sha-${{ steps.vars.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY

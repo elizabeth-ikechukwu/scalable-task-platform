@@ -11,19 +11,23 @@ let tasks = [];
 let nextId = 1;
 
 // Routes
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
   res.json({ message: "Task API is running", version: "1.0.0" });
 });
 
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "healthy", uptime: process.uptime() });
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
 });
 
-app.get("/tasks", (req, res) => {
+app.get("/api/tasks", (req, res) => {
   res.json(tasks);
 });
 
-app.post("/tasks", (req, res) => {
+app.post("/api/tasks", (req, res) => {
   const { title } = req.body;
   if (!title) {
     return res.status(400).json({ error: "Title is required" });
@@ -33,14 +37,14 @@ app.post("/tasks", (req, res) => {
   res.status(201).json(task);
 });
 
-app.patch("/tasks/:id", (req, res) => {
+app.patch("/api/tasks/:id", (req, res) => {
   const task = tasks.find((t) => t.id === parseInt(req.params.id));
   if (!task) return res.status(404).json({ error: "Task not found" });
   task.completed = !task.completed;
   res.json(task);
 });
 
-app.delete("/tasks/:id", (req, res) => {
+app.delete("/api/tasks/:id", (req, res) => {
   const index = tasks.findIndex((t) => t.id === parseInt(req.params.id));
   if (index === -1) return res.status(404).json({ error: "Task not found" });
   tasks.splice(index, 1);
@@ -53,11 +57,15 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal server error" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

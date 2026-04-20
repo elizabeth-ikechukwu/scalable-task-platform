@@ -130,6 +130,36 @@ test files that includes Jest globals.
 
 Both pass cleanly locally before the pipeline runs them in CI.
 
+## Troubleshooting Log
+
+### ECR Push 403 Forbidden
+
+**What happened:**
+The publish job failed on the first run with a 403 Forbidden error when pushing
+to ECR. The OIDC authentication succeeded - AWS accepted the GitHub token and
+issued temporary credentials - but the credentials were denied when pushing the
+image.
+
+**Root cause:**
+The IAM permissions policy was missing two ECR actions required by the Docker
+buildx push process:
+- `ecr:BatchGetImage` - needed to check if image layers already exist in ECR
+- `ecr:GetDownloadUrlForLayer` - needed to verify existing layers before upload
+
+Without these, ECR rejected the push with 403 even though authentication passed.
+
+**Fix:**
+Added the two missing actions to the `ECRImagePush` statement in
+`iam/github-actions-ecr-policy.json` and updated the inline policy on the IAM
+role in AWS console.
+
+**Lesson:**
+Authentication (proving who you are) and authorization (what you are allowed to
+do) are separate. OIDC handled authentication correctly. The permissions policy
+handles authorization. A 403 always means authentication passed but
+authorization failed - the identity is recognized but not permitted to perform
+that specific action.
+
 ## What Week 5 Adds
 
 Week 5 introduces Terraform to provision AWS infrastructure - VPC, subnets, security groups, and EC2 instance. The EC2 instance will pull images directly from ECR at deploy time using the same OIDC authentication pattern established this week.

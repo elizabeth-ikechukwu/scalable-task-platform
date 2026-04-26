@@ -145,4 +145,4 @@ postman/
 terraform.tfvars
 *.tfstate
 *.tfstate.backup
-*.tfplan
+tfplan

@@ -274,6 +274,7 @@ jobs:
         run: terraform plan -no-color
         env:
           TF_VAR_aws_account_id: ${{ secrets.TF_VAR_AWS_ACCOUNT_ID }}
+          TF_VAR_aws_region: ${{ secrets.TF_VAR_AWS_REGION }}
 
   terraform-apply:
     name: Terraform Apply
@@ -306,3 +307,4 @@ jobs:
         run: terraform apply -auto-approve
         env:
           TF_VAR_aws_account_id: ${{ secrets.TF_VAR_AWS_ACCOUNT_ID }}
+          TF_VAR_aws_region: ${{ secrets.TF_VAR_AWS_REGION }}

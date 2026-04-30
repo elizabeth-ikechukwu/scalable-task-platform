@@ -12,7 +12,7 @@ Built in public, one week at a time.
 - Containerization with Docker
 - CI/CD automation with GitHub Actions, Amazon ECR, and Docker Hub
 - Infrastructure as Code with Terraform
-- Cloud deployment on AWS
+- Cloud deployment on AWS EC2
 - Container orchestration with Kubernetes
 - Monitoring and observability with Prometheus and Grafana
 
@@ -41,8 +41,8 @@ Built in public, one week at a time.
 | 2 | Dockerize the backend | [Done](docs/week-2-update.md) |
 | 3 | React frontend and Docker Compose | [Done](docs/week-3-update.md) |
 | 4 | CI/CD pipeline with GitHub Actions, ECR and Docker Hub | [Done](docs/week-4-update.md) |
-| 5 | Terraform infrastructure setup | Upcoming |
-| 6 | Cloud deployment on AWS EC2 | Upcoming |
+| 5 | Terraform infrastructure and CI/CD pipeline extension | [Done](docs/week-5-update.md) |
+| 6 | Cloud deployment on AWS EC2 | [Done](docs/week-6-update.md) |
 | 7 | Database integration | Upcoming |
 | 8 | Kubernetes deployment | Upcoming |
 | 9 | Monitoring with Prometheus and Grafana | Upcoming |
@@ -97,15 +97,34 @@ Frontend runs on http://localhost:80
 
 ## CI/CD Pipeline
 
-Every pull request and push to `main` triggers a four-stage pipeline:
+Every pull request and push to `main` triggers a five-stage pipeline:
 
 ```
-lint -> unit-test -> build-and-integration-test -> publish
+lint -> unit-test -> build-and-integration-test -> publish -> terraform-apply
 ```
 
-The publish stage runs on merge to `main` only. Images are pushed to both Amazon ECR and Docker Hub, tagged with `latest` and the short Git SHA for traceability.
+- `terraform-plan` runs on every pull request — shows exactly what infrastructure will change before merging
+- `terraform-apply` runs on merge to `main` — infrastructure is provisioned by the pipeline, never from a local machine
+- The `publish` stage pushes images to both Amazon ECR and Docker Hub, tagged with `latest` and the short Git SHA
 
-AWS authentication uses OIDC - no static credentials stored in GitHub secrets.
+AWS authentication uses OIDC — no static credentials stored in GitHub secrets.
+
+---
+
+## Infrastructure
+
+All infrastructure is provisioned with Terraform and lives in `infra/terraform/`.
+
+| Resource | Details |
+|---|---|
+| VPC | Custom VPC with public subnet |
+| Networking | Internet gateway, route tables |
+| Security | Security groups with least-privilege rules |
+| Compute | EC2 t3.micro running Amazon Linux 2023 |
+| IAM | Instance profile with SSM and ECR permissions |
+| State | S3 remote backend with native state locking |
+
+EC2 instances configure themselves on first boot via a user data script — Docker is installed, images are pulled from ECR, and containers start automatically. No SSH required. All access via AWS SSM Session Manager.
 
 ---
 

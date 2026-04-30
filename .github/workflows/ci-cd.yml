@@ -242,3 +242,75 @@ jobs:
           echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-backend:sha-${{ steps.vars.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-frontend:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.DOCKERHUB_REGISTRY }}/task-frontend:sha-${{ steps.vars.outputs.sha }}\`" >> $GITHUB_STEP_SUMMARY
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: build-and-integration-test
+    if: github.event_name == 'pull_request'
+    concurrency:
+      group: terraform
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::424522917561:role/github-actions-scalable-task-platform
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -lock-timeout=5m
+        env:
+          TF_VAR_aws_account_id: ${{ secrets.TF_VAR_AWS_ACCOUNT_ID }}
+          TF_VAR_aws_region: ${{ secrets.TF_VAR_AWS_REGION }}
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: terraform
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::424522917561:role/github-actions-scalable-task-platform
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -lock-timeout=5m
+        env:
+          TF_VAR_aws_account_id: ${{ secrets.TF_VAR_AWS_ACCOUNT_ID }}
+          TF_VAR_aws_region: ${{ secrets.TF_VAR_AWS_REGION }}

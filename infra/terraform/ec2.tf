@@ -57,11 +57,17 @@ resource "aws_instance" "app" {
     docker pull ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-backend:latest
     docker pull ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-frontend:latest
 
-    # Run backend
+    # Run backend — DB credentials passed as environment variables
+    # Values come from Terraform variables which are sourced from GitHub Secrets
     docker run -d \
       --name task-backend \
       --restart unless-stopped \
       -p 3000:3000 \
+      -e DB_HOST=${var.db_host} \
+      -e DB_PORT=5432 \
+      -e DB_NAME=${var.db_name} \
+      -e DB_USER=${var.db_username} \
+      -e DB_PASSWORD=${var.db_password} \
       ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-backend:latest
 
     # Wait for backend to be ready
@@ -91,5 +97,9 @@ resource "aws_instance" "app" {
     Name        = "${var.project_name}-app-server"
     Project     = var.project_name
     Environment = var.environment
+  }
+
+  lifecycle {
+    ignore_changes = [ami, user_data]
   }
 }

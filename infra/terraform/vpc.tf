@@ -29,13 +29,15 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Two private subnets across two AZs — required by RDS
 resource "aws_subnet" "private" {
+  count             = 2
   vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidr
-  availability_zone = "${var.aws_region}a"
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = "${var.aws_region}${count.index == 0 ? "a" : "b"}"
 
   tags = {
-    Name        = "${var.project_name}-private-subnet"
+    Name        = "${var.project_name}-private-subnet-${count.index + 1}"
     Project     = var.project_name
     Environment = var.environment
   }

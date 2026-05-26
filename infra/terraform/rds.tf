@@ -4,9 +4,6 @@
 # ─────────────────────────────────────────────
 
 # ── DB Subnet Group ──────────────────────────
-# RDS needs to know which subnets it can live in.
-# We use the private subnets so it is never
-# reachable from the public internet.
 resource "aws_db_subnet_group" "tasks" {
   name       = "${var.project_name}-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
@@ -18,7 +15,7 @@ resource "aws_db_subnet_group" "tasks" {
 }
 
 # ── Security Group: RDS ──────────────────────
-# Only the EC2 instance security group may reach
+# Only the EC2 instance (nginx sg) may reach
 # the database on port 5432. No public access.
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
@@ -30,7 +27,7 @@ resource "aws_security_group" "rds" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.backend.id]
+    security_groups = [aws_security_group.nginx.id]
   }
 
   egress {
@@ -48,9 +45,6 @@ resource "aws_security_group" "rds" {
 }
 
 # ── RDS Parameter Group ──────────────────────
-# Explicit parameter group gives you a place to
-# tune Postgres settings later without replacing
-# the instance.
 resource "aws_db_parameter_group" "tasks" {
   name   = "${var.project_name}-pg16"
   family = "postgres16"
@@ -68,16 +62,15 @@ resource "aws_db_instance" "tasks" {
   # Engine
   engine         = "postgres"
   engine_version = "16"
-  instance_class = "db.t3.micro" # Free-tier eligible
+  instance_class = "db.t3.micro"
 
   # Storage
   allocated_storage     = 20
-  max_allocated_storage = 100 # Enable storage autoscaling up to 100 GB
+  max_allocated_storage = 100
   storage_type          = "gp2"
   storage_encrypted     = true
 
-  # Credentials — sourced from Terraform variables
-  # which are populated from GitHub Secrets via the pipeline
+  # Credentials
   db_name  = var.db_name
   username = var.db_username
   password = var.db_password
@@ -86,21 +79,20 @@ resource "aws_db_instance" "tasks" {
   db_subnet_group_name   = aws_db_subnet_group.tasks.name
   vpc_security_group_ids = [aws_security_group.rds.id]
   publicly_accessible    = false
-  multi_az               = false # Single-AZ is fine for this stage
+  multi_az               = false
 
   # Maintenance
   parameter_group_name    = aws_db_parameter_group.tasks.name
   backup_retention_period = 7
   backup_window           = "03:00-04:00"
   maintenance_window      = "Mon:04:00-Mon:05:00"
-  deletion_protection     = false # Set to true before production hardening (Week 10)
+  deletion_protection     = false
 
-  # Lifecycle — prevent accidental destroy on credential rotation
   lifecycle {
     ignore_changes = [password]
   }
 
-  skip_final_snapshot = true # Change to false and set final_snapshot_identifier for production
+  skip_final_snapshot = true
 
   tags = {
     Name    = "${var.project_name}-db"
@@ -109,8 +101,6 @@ resource "aws_db_instance" "tasks" {
 }
 
 # ── Outputs ───────────────────────────────────
-# The EC2 user-data script and any future modules
-# that need the DB endpoint will read these.
 output "rds_endpoint" {
   description = "RDS instance endpoint (host:port)"
   value       = aws_db_instance.tasks.endpoint

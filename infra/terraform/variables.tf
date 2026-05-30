@@ -4,7 +4,7 @@ variable "aws_region" {
 }
 
 variable "aws_account_id" {
-  description = "AWS account ID — set in terraform.tfvars, never hardcoded"
+  description = "AWS account ID - set in terraform.tfvars, never hardcoded"
   type        = string
 }
 
@@ -57,7 +57,13 @@ variable "db_password" {
 }
 
 variable "db_host" {
-  description = "RDS instance hostname — output from aws_db_instance.tasks.address"
+  description = "RDS instance hostname - output from aws_db_instance.tasks.address"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_secret" {
+  description = "JWT signing secret for authentication"
   type        = string
   sensitive   = true
 }

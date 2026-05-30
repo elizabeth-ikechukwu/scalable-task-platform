@@ -32,8 +32,3 @@ output "elastic_ip" {
   description = "Permanent Elastic IP - point your domain DNS A record to this"
   value       = aws_eip.app.public_ip
 }
-
-output "rds_hostname" {
-  description = "RDS instance hostname"
-  value       = aws_db_instance.tasks.address
-}

@@ -1,6 +1,6 @@
-# ──────────────────────────────────────────────
-# Data Source — Latest Amazon Linux 2023 AMI
-# ──────────────────────────────────────────────
+# --------------------------------------------------
+# Data Source - Latest Amazon Linux 2023 AMI
+# --------------------------------------------------
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
@@ -16,9 +16,9 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-# ──────────────────────────────────────────────
+# --------------------------------------------------
 # EC2 Instance
-# ──────────────────────────────────────────────
+# --------------------------------------------------
 resource "aws_instance" "app" {
   ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t3.micro"
@@ -48,6 +48,45 @@ resource "aws_instance" "app" {
     systemctl enable amazon-ssm-agent
     systemctl start amazon-ssm-agent
 
+    # --------------------------------------------------
+    # Fetch secrets from SSM Parameter Store at runtime.
+    # Credentials are never stored in user data or code.
+    # --------------------------------------------------
+    DB_HOST=$(aws ssm get-parameter \
+      --name "/${var.project_name}/db_host" \
+      --with-decryption \
+      --query "Parameter.Value" \
+      --output text \
+      --region ${var.aws_region})
+
+    DB_NAME=$(aws ssm get-parameter \
+      --name "/${var.project_name}/db_name" \
+      --with-decryption \
+      --query "Parameter.Value" \
+      --output text \
+      --region ${var.aws_region})
+
+    DB_USER=$(aws ssm get-parameter \
+      --name "/${var.project_name}/db_username" \
+      --with-decryption \
+      --query "Parameter.Value" \
+      --output text \
+      --region ${var.aws_region})
+
+    DB_PASSWORD=$(aws ssm get-parameter \
+      --name "/${var.project_name}/db_password" \
+      --with-decryption \
+      --query "Parameter.Value" \
+      --output text \
+      --region ${var.aws_region})
+
+    JWT_SECRET=$(aws ssm get-parameter \
+      --name "/${var.project_name}/jwt_secret" \
+      --with-decryption \
+      --query "Parameter.Value" \
+      --output text \
+      --region ${var.aws_region})
+
     # Authenticate to ECR
     aws ecr get-login-password --region ${var.aws_region} | \
       docker login --username AWS --password-stdin \
@@ -57,17 +96,17 @@ resource "aws_instance" "app" {
     docker pull ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-backend:latest
     docker pull ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-frontend:latest
 
-    # Run backend — DB credentials passed as environment variables
-    # Values come from Terraform variables which are sourced from GitHub Secrets
+    # Run backend with secrets fetched from SSM
     docker run -d \
       --name task-backend \
       --restart unless-stopped \
       -p 3000:3000 \
-      -e DB_HOST=${var.db_host} \
+      -e DB_HOST=$DB_HOST \
       -e DB_PORT=5432 \
-      -e DB_NAME=${var.db_name} \
-      -e DB_USER=${var.db_username} \
-      -e DB_PASSWORD=${var.db_password} \
+      -e DB_NAME=$DB_NAME \
+      -e DB_USER=$DB_USER \
+      -e DB_PASSWORD=$DB_PASSWORD \
+      -e JWT_SECRET=$JWT_SECRET \
       ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-backend:latest
 
     # Wait for backend to be ready

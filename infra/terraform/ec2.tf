@@ -142,3 +142,19 @@ resource "aws_instance" "app" {
     ignore_changes = [ami, user_data]
   }
 }
+
+# --------------------------------------------------
+# Elastic IP - permanent public IP for the EC2 instance.
+# This IP never changes even after instance restarts,
+# making it safe to point a domain name at it.
+# --------------------------------------------------
+resource "aws_eip" "app" {
+  domain   = "vpc"
+  instance = aws_instance.app.id
+
+  tags = {
+    Name        = "${var.project_name}-eip"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}

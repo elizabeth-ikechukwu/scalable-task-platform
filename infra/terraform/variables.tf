@@ -67,3 +67,9 @@ variable "jwt_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "domain_name" {
+  description = "Root domain name for Route53 hosted zone"
+  type        = string
+  default     = "lizzycloudlab.online"
+}

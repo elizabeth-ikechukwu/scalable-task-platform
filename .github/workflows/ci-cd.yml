@@ -10,6 +10,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REGISTRY: 424522917561.dkr.ecr.us-east-1.amazonaws.com
   DOCKERHUB_REGISTRY: lizzycloudlab
+  EC2_INSTANCE_ID: i-0293edd5462dfb9dc
 
 permissions:
   id-token: write
@@ -308,3 +309,92 @@ jobs:
           echo "- RDS hostname: \`${{ steps.rds.outputs.hostname }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- SSM parameters provisioned" >> $GITHUB_STEP_SUMMARY
           echo "- EC2 startup script fetches secrets from SSM at runtime" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::424522917561:role/github-actions-scalable-task-platform
+          aws-region: us-east-1
+
+      - name: Deploy new images to EC2 via SSM
+        run: |
+          aws ssm send-command \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "set -e",
+              "echo \"--- Authenticating to ECR ---\"",
+              "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 424522917561.dkr.ecr.us-east-1.amazonaws.com",
+              "echo \"--- Pulling latest images ---\"",
+              "docker pull 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-backend:latest",
+              "docker pull 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-frontend:latest",
+              "echo \"--- Stopping old containers ---\"",
+              "docker stop task-backend task-frontend || true",
+              "docker rm task-backend task-frontend || true",
+              "echo \"--- Fetching secrets from SSM ---\"",
+              "DB_HOST=$(aws ssm get-parameter --name /scalable-task-platform/db_host --with-decryption --query Parameter.Value --output text --region us-east-1)",
+              "DB_NAME=$(aws ssm get-parameter --name /scalable-task-platform/db_name --with-decryption --query Parameter.Value --output text --region us-east-1)",
+              "DB_USER=$(aws ssm get-parameter --name /scalable-task-platform/db_username --with-decryption --query Parameter.Value --output text --region us-east-1)",
+              "DB_PASSWORD=$(aws ssm get-parameter --name /scalable-task-platform/db_password --with-decryption --query Parameter.Value --output text --region us-east-1)",
+              "JWT_SECRET=$(aws ssm get-parameter --name /scalable-task-platform/jwt_secret --with-decryption --query Parameter.Value --output text --region us-east-1)",
+              "echo \"--- Starting backend ---\"",
+              "docker run -d --name task-backend --restart unless-stopped -p 3000:3000 -e DB_HOST=$DB_HOST -e DB_PORT=5432 -e DB_NAME=$DB_NAME -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD -e JWT_SECRET=$JWT_SECRET 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-backend:latest",
+              "sleep 5",
+              "echo \"--- Starting frontend ---\"",
+              "docker run -d --name task-frontend --restart unless-stopped -p 80:80 --link task-backend:backend 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-frontend:latest",
+              "echo \"--- Deployment complete ---\"",
+              "docker ps"
+            ]' \
+            --output text \
+            --query "Command.CommandId" > /tmp/command-id.txt
+
+          COMMAND_ID=$(cat /tmp/command-id.txt)
+          echo "SSM Command ID: $COMMAND_ID"
+
+          echo "Waiting for deployment to complete..."
+          for i in $(seq 1 30); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+              --query "Status" \
+              --output text 2>/dev/null || echo "Pending")
+            echo "Attempt $i: status = $STATUS"
+            if [ "$STATUS" = "Success" ]; then
+              echo "Deployment succeeded."
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+                --query "StandardOutputContent" \
+                --output text
+              break
+            fi
+            if [ "$STATUS" = "Failed" ] || [ "$STATUS" = "TimedOut" ] || [ "$STATUS" = "Cancelled" ]; then
+              echo "Deployment failed with status: $STATUS"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+                --query "StandardErrorContent" \
+                --output text
+              exit 1
+            fi
+            if [ "$i" = "30" ]; then
+              echo "Deployment timed out waiting for SSM command."
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Job summary
+        run: |
+          echo "### Deployment Complete - $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- New images pulled from ECR" >> $GITHUB_STEP_SUMMARY
+          echo "- Containers restarted with latest images" >> $GITHUB_STEP_SUMMARY
+          echo "- Secrets fetched from SSM Parameter Store" >> $GITHUB_STEP_SUMMARY
+          echo "- Instance: \`${{ env.EC2_INSTANCE_ID }}\`" >> $GITHUB_STEP_SUMMARY

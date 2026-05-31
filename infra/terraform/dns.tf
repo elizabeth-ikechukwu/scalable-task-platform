@@ -1,75 +1,34 @@
-variable "aws_region" {
-  description = "AWS region for all resources"
-  type        = string
+# --------------------------------------------------
+# Route53 Hosted Zone
+# --------------------------------------------------
+resource "aws_route53_zone" "main" {
+  name = var.domain_name
+
+  tags = {
+    Name        = "${var.project_name}-hosted-zone"
+    Project     = var.project_name
+    Environment = var.environment
+  }
 }
 
-variable "aws_account_id" {
-  description = "AWS account ID - set in terraform.tfvars, never hardcoded"
-  type        = string
+# --------------------------------------------------
+# A Record - taskflow subdomain points to Elastic IP
+# --------------------------------------------------
+resource "aws_route53_record" "taskflow" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "taskflow.${var.domain_name}"
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.app.public_ip]
 }
 
-variable "project_name" {
-  description = "Project name used for naming and tagging all resources"
-  type        = string
-  default     = "scalable-task-platform"
-}
-
-variable "environment" {
-  description = "Deployment environment"
-  type        = string
-  default     = "production"
-}
-
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "public_subnet_cidr" {
-  description = "CIDR block for the public subnet"
-  type        = string
-  default     = "10.0.1.0/24"
-}
-
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for the two private subnets across two AZs"
-  type        = list(string)
-  default     = ["10.0.2.0/24", "10.0.3.0/24"]
-}
-
-variable "db_name" {
-  description = "PostgreSQL database name"
-  type        = string
-  default     = "tasksdb"
-}
-
-variable "db_username" {
-  description = "PostgreSQL master username"
-  type        = string
-  sensitive   = true
-}
-
-variable "db_password" {
-  description = "PostgreSQL master password"
-  type        = string
-  sensitive   = true
-}
-
-variable "db_host" {
-  description = "RDS instance hostname - output from aws_db_instance.tasks.address"
-  type        = string
-  sensitive   = true
-}
-
-variable "jwt_secret" {
-  description = "JWT signing secret for authentication"
-  type        = string
-  sensitive   = true
-}
-
-variable "domain_name" {
-  description = "Root domain name for Route53 hosted zone"
-  type        = string
-  default     = "lizzycloudlab.online"
+# --------------------------------------------------
+# A Record - root domain points to Elastic IP
+# --------------------------------------------------
+resource "aws_route53_record" "root" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = var.domain_name
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.app.public_ip]
 }

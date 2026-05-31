@@ -1,34 +1,9 @@
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = aws_vpc.main.id
+output "nameservers" {
+  description = "Route53 nameservers - paste these into Hostinger DNS settings"
+  value       = aws_route53_zone.main.name_servers
 }
 
-output "public_subnet_id" {
-  description = "ID of the public subnet"
-  value       = aws_subnet.public.id
-}
-
-output "private_subnet_id" {
-  description = "ID of the private subnet"
-  value       = aws_subnet.private[0].id
-}
-
-output "ec2_instance_id" {
-  description = "EC2 instance ID - use this to connect via SSM"
-  value       = aws_instance.app.id
-}
-
-output "ec2_public_ip" {
-  description = "Public IP of the EC2 instance"
-  value       = aws_instance.app.public_ip
-}
-
-output "ec2_public_dns" {
-  description = "Public DNS of the EC2 instance"
-  value       = aws_instance.app.public_dns
-}
-
-output "elastic_ip" {
-  description = "Permanent Elastic IP - point your domain DNS A record to this"
-  value       = aws_eip.app.public_ip
+output "app_url" {
+  description = "TaskFlow app URL"
+  value       = "http://taskflow.${var.domain_name}"
 }

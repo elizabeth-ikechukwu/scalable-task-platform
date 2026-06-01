@@ -87,6 +87,12 @@ resource "aws_instance" "app" {
       --output text \
       --region ${var.aws_region})
 
+    DB_SSL=$(aws ssm get-parameter \
+      --name "/${var.project_name}/db_ssl" \
+      --query "Parameter.Value" \
+      --output text \
+      --region ${var.aws_region})
+
     # Authenticate to ECR
     aws ecr get-login-password --region ${var.aws_region} | \
       docker login --username AWS --password-stdin \
@@ -106,6 +112,7 @@ resource "aws_instance" "app" {
       -e DB_NAME=$DB_NAME \
       -e DB_USER=$DB_USER \
       -e DB_PASSWORD=$DB_PASSWORD \
+      -e DB_SSL=$DB_SSL \
       -e JWT_SECRET=$JWT_SECRET \
       ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/task-backend:latest
 

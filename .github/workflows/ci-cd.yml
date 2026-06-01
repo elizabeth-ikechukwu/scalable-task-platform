@@ -344,7 +344,7 @@ jobs:
               "DB_PASSWORD=$(aws ssm get-parameter --name /scalable-task-platform/db_password --with-decryption --query Parameter.Value --output text --region us-east-1)",
               "JWT_SECRET=$(aws ssm get-parameter --name /scalable-task-platform/jwt_secret --with-decryption --query Parameter.Value --output text --region us-east-1)",
               "echo \"--- Starting backend ---\"",
-              "docker run -d --name task-backend --restart unless-stopped -p 3000:3000 -e DB_HOST=$DB_HOST -e DB_PORT=5432 -e DB_NAME=$DB_NAME -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD -e JWT_SECRET=$JWT_SECRET 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-backend:latest",
+              "docker run -d --name task-backend --restart unless-stopped -p 3000:3000 -e DB_HOST=$DB_HOST -e DB_PORT=5432 -e DB_NAME=$DB_NAME -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD -e DB_SSL=true -e JWT_SECRET=$JWT_SECRET 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-backend:latest",
               "sleep 5",
               "echo \"--- Starting frontend ---\"",
               "docker run -d --name task-frontend --restart unless-stopped -p 80:80 --link task-backend:backend 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-frontend:latest",

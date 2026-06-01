@@ -6,10 +6,10 @@
 
 /* ---- CSS variables ---- */
 :root {
-  --bg:          #0a0b0f;
-  --surface:     #111318;
-  --surface2:    #16181f;
-  --border:      #1e2028;
+  --bg:          #0d0f14;
+  --surface:     #13151c;
+  --surface2:    #1a1d26;
+  --border:      #252836;
   --accent:      #6366f1;
   --accent-dim:  rgba(99,102,241,0.12);
   --green:       #22c55e;
@@ -17,8 +17,8 @@
   --red:         #ef4444;
   --red-dim:     rgba(239,68,68,0.12);
   --text:        #f1f5f9;
-  --text-2:      #94a3b8;
-  --text-3:      #3d4257;
+  --text-2:      #a8b4c8;
+  --text-3:      #545970;
 }
 
 /* ---- Base resets ---- */
@@ -32,6 +32,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;

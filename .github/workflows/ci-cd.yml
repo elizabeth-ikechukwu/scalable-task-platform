@@ -346,8 +346,12 @@ jobs:
               "echo \"--- Starting backend ---\"",
               "docker run -d --name task-backend --restart unless-stopped -p 3000:3000 -e DB_HOST=$DB_HOST -e DB_PORT=5432 -e DB_NAME=$DB_NAME -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD -e DB_SSL=true -e JWT_SECRET=$JWT_SECRET 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-backend:latest",
               "sleep 5",
-              "echo \"--- Starting frontend ---\"",
-              "docker run -d --name task-frontend --restart unless-stopped -p 80:80 --link task-backend:backend 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-frontend:latest",
+              "echo \"--- Starting frontend with HTTPS ---\"",
+              "docker run -d --name task-frontend --restart unless-stopped -p 80:80 -p 443:443 -v /etc/letsencrypt:/etc/letsencrypt:ro --link task-backend:backend 424522917561.dkr.ecr.us-east-1.amazonaws.com/task-frontend:latest",
+              "sleep 3",
+              "echo \"--- Applying HTTPS nginx config ---\"",
+              "docker exec task-frontend sh -c \"cat > /etc/nginx/conf.d/default.conf << 'NGINXEOF'\nserver {\n    listen 80;\n    server_name taskflow.lizzycloudlab.online lizzycloudlab.online;\n    return 301 https://\\$host\\$request_uri;\n}\nserver {\n    listen 443 ssl;\n    server_name taskflow.lizzycloudlab.online lizzycloudlab.online;\n    ssl_certificate /etc/letsencrypt/live/taskflow.lizzycloudlab.online/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/taskflow.lizzycloudlab.online/privkey.pem;\n    ssl_protocols TLSv1.2 TLSv1.3;\n    ssl_ciphers HIGH:!aNULL:!MD5;\n    location / { root /usr/share/nginx/html; index index.html; try_files \\$uri \\$uri/ /index.html; }\n    location /api/ { proxy_pass http://backend:3000; proxy_http_version 1.1; proxy_set_header Host \\$host; proxy_set_header X-Real-IP \\$remote_addr; }\n}\nNGINXEOF\"",
+              "docker exec task-frontend nginx -s reload",
               "echo \"--- Deployment complete ---\"",
               "docker ps"
             ]' \
@@ -395,6 +399,7 @@ jobs:
           echo "### Deployment Complete - $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- New images pulled from ECR" >> $GITHUB_STEP_SUMMARY
-          echo "- Containers restarted with latest images" >> $GITHUB_STEP_SUMMARY
+          echo "- Containers restarted with HTTPS enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- SSL certificate mounted from Let's Encrypt" >> $GITHUB_STEP_SUMMARY
           echo "- Secrets fetched from SSM Parameter Store" >> $GITHUB_STEP_SUMMARY
           echo "- Instance: \`${{ env.EC2_INSTANCE_ID }}\`" >> $GITHUB_STEP_SUMMARY

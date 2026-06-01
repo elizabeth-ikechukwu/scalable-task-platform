@@ -7,10 +7,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg:       "#0a0b0f",
-        surface:  "#111318",
-        surface2: "#16181f",
-        border:   "#1e2028",
+        bg:       "#0d0f14",
+        surface:  "#13151c",
+        surface2: "#1a1d26",
+        border:   "#252836",
         accent:   "#6366f1",
         "accent-hover": "#4f46e5",
         "accent-dim": "rgba(99,102,241,0.12)",
@@ -19,8 +19,8 @@ export default {
         red:      "#ef4444",
         "red-dim": "rgba(239,68,68,0.12)",
         text1:    "#f1f5f9",
-        text2:    "#94a3b8",
-        text3:    "#3d4257",
+        text2:    "#a8b4c8",
+        text3:    "#545970",
       },
       fontFamily: {
         display: ["Syne", "sans-serif"],

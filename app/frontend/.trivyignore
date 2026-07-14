@@ -1,18 +1,4 @@
-# Alpine OS packages in nginx:alpine base image
-# These are OS-level CVEs fixed in newer Alpine versions
-# Mitigation: upgrade nginx:alpine when patched versions are available
-
-# c-ares - DNS resolver library
-CVE-2026-33630
-
-# curl/libcurl - SMB connection reuse and cookie leak
-CVE-2026-5773
-CVE-2026-6276
-
-# libexpat - XML parser
-CVE-2026-56131
-
-# Node.js devDependencies - not in production image
+# Node.js devDependencies - not in production image (--omit=dev)
 CVE-2026-33671
 CVE-2026-48815
 CVE-2026-12151

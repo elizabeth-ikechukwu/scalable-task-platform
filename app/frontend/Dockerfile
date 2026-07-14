@@ -14,6 +14,9 @@ RUN npm run build
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
+# Upgrade vulnerable packages to patched versions
+RUN apk update && apk upgrade libexpat c-ares curl libcurl
+
 RUN apk add --no-cache wget
 
 # Create non-root user (Alpine commands for nginx:alpine)

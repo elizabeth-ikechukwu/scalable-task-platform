@@ -16,7 +16,7 @@ FROM nginx:alpine
 
 RUN apk add --no-cache wget
 
-# Create non-root user
+# Create non-root user (Alpine commands for nginx:alpine)
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY --from=builder /app/dist /usr/share/nginx/html

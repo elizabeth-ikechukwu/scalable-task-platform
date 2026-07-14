@@ -8,8 +8,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
-# Create non-root user and own the app directory
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Create non-root user and own the app directory (Debian commands for slim)
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user

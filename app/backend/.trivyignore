@@ -1,0 +1,8 @@
+# picomatch - Jest devDependency, not in production image (--omit=dev)
+CVE-2026-33671
+
+# sigstore - Jest devDependency, not in production image (--omit=dev)
+CVE-2026-48815
+
+# undici - built into Node.js binary, patched in future Node.js release
+CVE-2026-12151

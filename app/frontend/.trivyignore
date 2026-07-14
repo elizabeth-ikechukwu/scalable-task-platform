@@ -1,0 +1,8 @@
+# picomatch - devDependency, not in production image
+CVE-2026-33671
+
+# sigstore - devDependency, not in production image  
+CVE-2026-48815
+
+# undici - built into Node.js binary, not fixable via npm
+CVE-2026-12151

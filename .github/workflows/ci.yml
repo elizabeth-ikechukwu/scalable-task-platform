@@ -100,6 +100,7 @@ jobs:
           exit-code: 1
           severity: CRITICAL,HIGH
           ignore-unfixed: true
+          trivyignores: app/frontend/.trivyignore
       - name: Start stack
         run: docker compose up -d
       - name: Wait for backend to be healthy

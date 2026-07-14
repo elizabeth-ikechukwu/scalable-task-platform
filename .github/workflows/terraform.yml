@@ -1,0 +1,96 @@
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/terraform/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/terraform/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    concurrency:
+      group: terraform
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::569360421892:role/github-actions-taskflow
+          aws-region: us-east-1
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.3
+      - name: Terraform Init
+        run: terraform init
+      - name: Terraform Plan
+        run: terraform plan -no-color -lock-timeout=5m
+        env:
+          TF_VAR_aws_account_id: ${{ secrets.TF_VAR_AWS_ACCOUNT_ID }}
+          TF_VAR_aws_region: ${{ secrets.TF_VAR_AWS_REGION }}
+          TF_VAR_db_name: ${{ secrets.TF_VAR_db_name }}
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: terraform
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::569360421892:role/github-actions-taskflow
+          aws-region: us-east-1
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.3
+      - name: Terraform Init
+        run: terraform init
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -lock-timeout=5m
+        env:
+          TF_VAR_aws_account_id: ${{ secrets.TF_VAR_AWS_ACCOUNT_ID }}
+          TF_VAR_aws_region: ${{ secrets.TF_VAR_AWS_REGION }}
+          TF_VAR_db_name: ${{ secrets.TF_VAR_db_name }}
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name taskflow-prod-cluster \
+            --region us-east-1
+      - name: Job summary
+        run: |
+          echo "### Terraform Apply - $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- VPC and networking provisioned" >> $GITHUB_STEP_SUMMARY
+          echo "- EKS cluster provisioned" >> $GITHUB_STEP_SUMMARY
+          echo "- RDS PostgreSQL provisioned" >> $GITHUB_STEP_SUMMARY
+          echo "- ECR repositories provisioned" >> $GITHUB_STEP_SUMMARY
+          echo "- SSM parameters provisioned" >> $GITHUB_STEP_SUMMARY
+          echo "- ACM certificate provisioned" >> $GITHUB_STEP_SUMMARY

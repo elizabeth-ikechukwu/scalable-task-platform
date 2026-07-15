@@ -56,6 +56,7 @@ module "eks" {
   public_subnet_ids    = module.vpc.public_subnet_ids
   eks_cluster_role_arn = module.iam.eks_cluster_role_arn
   eks_node_role_arn    = module.iam.eks_node_role_arn
+  ebs_csi_role_arn     = module.iam.ebs_csi_role_arn
   node_instance_type   = var.node_instance_type
   node_desired_size    = var.node_desired_size
   node_min_size        = var.node_min_size

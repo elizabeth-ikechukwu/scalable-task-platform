@@ -61,19 +61,19 @@ resource "aws_security_group" "eks_nodes" {
   }
 
   ingress {
-    description = "Allow control plane to communicate with nodes"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow control plane to communicate with nodes"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_eks_cluster.main.vpc_config[0].cluster_security_group_id]
   }
 
   ingress {
-    description = "Allow control plane to nodes"
-    from_port   = 1025
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "Allow control plane to nodes"
+    from_port       = 1025
+    to_port         = 65535
+    protocol        = "tcp"
+    security_groups = [aws_eks_cluster.main.vpc_config[0].cluster_security_group_id]
   }
 
   egress {

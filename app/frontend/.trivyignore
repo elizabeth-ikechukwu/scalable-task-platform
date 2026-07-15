@@ -1,0 +1,4 @@
+# Node.js devDependencies - not in production image (--omit=dev)
+CVE-2026-33671
+CVE-2026-48815
+CVE-2026-12151

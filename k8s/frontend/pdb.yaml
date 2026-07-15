@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: taskflow-frontend-pdb
+  namespace: taskflow
+  labels:
+    app.kubernetes.io/name: taskflow-frontend
+    app.kubernetes.io/component: frontend
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taskflow-frontend

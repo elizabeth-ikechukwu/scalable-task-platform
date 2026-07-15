@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskflow-frontend-svc
+  namespace: taskflow
+  labels:
+    app.kubernetes.io/name: taskflow-frontend
+    app.kubernetes.io/component: frontend
+spec:
+  selector:
+    app.kubernetes.io/name: taskflow-frontend
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP

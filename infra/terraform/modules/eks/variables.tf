@@ -72,3 +72,8 @@ variable "aws_region" {
   description = "AWS region"
   type        = string
 }
+
+variable "ebs_csi_role_arn" {
+  description = "IAM role ARN for EBS CSI driver IRSA"
+  type        = string
+}

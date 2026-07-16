@@ -22,3 +22,8 @@ output "ebs_csi_role_arn" {
   description = "IRSA role ARN for EBS CSI driver"
   value       = aws_iam_role.ebs_csi.arn
 }
+
+output "image_updater_role_arn" {
+  description = "IRSA role ARN for ArgoCD Image Updater"
+  value       = aws_iam_role.argocd_image_updater.arn
+}

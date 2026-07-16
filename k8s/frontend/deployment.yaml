@@ -23,7 +23,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: frontend
-        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-frontend:latest
+        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-frontend:sha-6ce2a83
         ports:
         - containerPort: 80
         livenessProbe:

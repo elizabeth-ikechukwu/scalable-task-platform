@@ -17,13 +17,9 @@ spec:
         app.kubernetes.io/name: taskflow-frontend
         app.kubernetes.io/component: frontend
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
       containers:
       - name: frontend
-        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-frontend:sha-9c8b575
+        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-frontend:sha-da3ee68
         ports:
         - containerPort: 80
         livenessProbe:
@@ -50,7 +46,3 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "250m"
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 1000

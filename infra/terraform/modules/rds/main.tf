@@ -14,11 +14,11 @@ data "aws_ssm_parameter" "db_password" {
 
 # ──────────────────────────────────────────────
 # RDS Security Group
-# Only EKS nodes can reach the database
+# Allow PostgreSQL from EKS nodes and pods
 # ──────────────────────────────────────────────
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
-  description = "Allow PostgreSQL access from EKS nodes only"
+  description = "Allow PostgreSQL access from EKS nodes and pods"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -27,6 +27,14 @@ resource "aws_security_group" "rds" {
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [var.eks_node_security_group_id]
+  }
+
+  ingress {
+    description = "PostgreSQL from EKS pods via VPC CNI"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
   }
 
   egress {

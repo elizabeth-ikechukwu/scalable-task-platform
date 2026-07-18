@@ -17,8 +17,6 @@ spec:
     repoURL: https://github.com/elizabeth-ikechukwu/scalable-task-platform.git
     targetRevision: main
     path: k8s
-    directory:
-      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: taskflow

@@ -21,6 +21,7 @@ resource "helm_release" "kube_prometheus_stack" {
   chart      = "kube-prometheus-stack"
   namespace  = kubernetes_namespace.monitoring.metadata[0].name
   version    = "65.1.1"
+  timeout    = 600
 
   values = [
     yamlencode({
@@ -32,24 +33,70 @@ resource "helm_release" "kube_prometheus_stack" {
         service = {
           type = "ClusterIP"
         }
+        resources = {
+          requests = {
+            memory = "64Mi"
+            cpu    = "50m"
+          }
+          limits = {
+            memory = "128Mi"
+            cpu    = "100m"
+          }
+        }
       }
       prometheus = {
         prometheusSpec = {
-          retention = "7d"
+          retention = "3d"
           resources = {
             requests = {
-              memory = "256Mi"
-              cpu    = "100m"
+              memory = "128Mi"
+              cpu    = "50m"
             }
             limits = {
-              memory = "512Mi"
-              cpu    = "300m"
+              memory = "256Mi"
+              cpu    = "200m"
             }
           }
         }
       }
       alertmanager = {
         enabled = false
+      }
+      prometheusOperator = {
+        resources = {
+          requests = {
+            memory = "64Mi"
+            cpu    = "50m"
+          }
+          limits = {
+            memory = "128Mi"
+            cpu    = "100m"
+          }
+        }
+      }
+      kubeStateMetrics = {
+        resources = {
+          requests = {
+            memory = "32Mi"
+            cpu    = "10m"
+          }
+          limits = {
+            memory = "64Mi"
+            cpu    = "50m"
+          }
+        }
+      }
+      nodeExporter = {
+        resources = {
+          requests = {
+            memory = "32Mi"
+            cpu    = "10m"
+          }
+          limits = {
+            memory = "64Mi"
+            cpu    = "50m"
+          }
+        }
       }
     })
   ]
@@ -67,6 +114,7 @@ resource "helm_release" "fluent_bit" {
   chart      = "fluent-bit"
   namespace  = kubernetes_namespace.monitoring.metadata[0].name
   version    = "0.47.4"
+  timeout    = 300
 
   values = [
     yamlencode({
@@ -84,6 +132,16 @@ resource "helm_release" "fluent_bit" {
       serviceAccount = {
         annotations = {
           "eks.amazonaws.com/role-arn" = var.fluent_bit_role_arn
+        }
+      }
+      resources = {
+        requests = {
+          memory = "32Mi"
+          cpu    = "10m"
+        }
+        limits = {
+          memory = "64Mi"
+          cpu    = "50m"
         }
       }
     })

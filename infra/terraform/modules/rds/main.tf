@@ -1,4 +1,13 @@
 # ──────────────────────────────────────────────
+# Import existing RDS security group
+# Created before Terraform managed it
+# ──────────────────────────────────────────────
+import {
+  to = aws_security_group.rds
+  id = "sg-020e9000a202de926"
+}
+
+# ──────────────────────────────────────────────
 # Read credentials from SSM
 # Created manually — Terraform never writes these
 # ──────────────────────────────────────────────

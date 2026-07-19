@@ -171,3 +171,11 @@ module "monitoring" {
 
   depends_on = [module.eks]
 }
+
+# ──────────────────────────────────────────────
+# Import existing RDS security group
+# ──────────────────────────────────────────────
+import {
+  to = module.rds.aws_security_group.rds
+  id = "sg-020e9000a202de926"
+}

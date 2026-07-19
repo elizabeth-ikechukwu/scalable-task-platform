@@ -33,6 +33,19 @@ resource "helm_release" "kube_prometheus_stack" {
         service = {
           type = "ClusterIP"
         }
+        ingress = {
+          enabled = true
+          annotations = {
+            "kubernetes.io/ingress.class"                    = "alb"
+            "alb.ingress.kubernetes.io/scheme"               = "internet-facing"
+            "alb.ingress.kubernetes.io/target-type"          = "ip"
+            "alb.ingress.kubernetes.io/certificate-arn"      = "arn:aws:acm:us-east-1:569360421892:certificate/fd67858a-730c-4106-91f4-48b49435bf31"
+            "alb.ingress.kubernetes.io/listen-ports"         = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+            "alb.ingress.kubernetes.io/ssl-redirect"         = "443"
+          }
+          hosts = ["grafana.thetaskflowapp.online"]
+          path  = "/"
+        }
         resources = {
           requests = {
             memory = "64Mi"

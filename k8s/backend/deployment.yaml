@@ -24,7 +24,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: backend
-        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-backend:sha-da3ee68
+        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-backend:sha-a0e3bb9
         ports:
         - containerPort: 3000
         env:

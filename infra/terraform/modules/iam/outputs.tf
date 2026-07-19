@@ -27,3 +27,8 @@ output "image_updater_role_arn" {
   description = "IRSA role ARN for ArgoCD Image Updater"
   value       = aws_iam_role.argocd_image_updater.arn
 }
+
+output "fluent_bit_role_arn" {
+  description = "IRSA role ARN for Fluent Bit CloudWatch logging"
+  value       = aws_iam_role.fluent_bit.arn
+}

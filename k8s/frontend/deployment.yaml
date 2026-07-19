@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-frontend:sha-a0e3bb9
+        image: 569360421892.dkr.ecr.us-east-1.amazonaws.com/task-frontend:sha-0b1f4c9
         ports:
         - containerPort: 80
         livenessProbe:

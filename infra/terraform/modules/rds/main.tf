@@ -14,7 +14,7 @@ data "aws_ssm_parameter" "db_password" {
 
 # ──────────────────────────────────────────────
 # RDS Security Group
-# # Allow PostgreSQL from EKS nodes and pods via VPC CNI
+# Allow PostgreSQL from EKS nodes and pods via VPC CNI
 # ──────────────────────────────────────────────
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
@@ -46,7 +46,7 @@ resource "aws_security_group" "rds" {
   }
 
   lifecycle {
-    ignore_changes = [ingress]
+    ignore_changes = all
   }
 
   tags = {

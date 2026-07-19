@@ -266,3 +266,58 @@ resource "aws_iam_role_policy" "argocd_image_updater" {
     ]
   })
 }
+
+# ──────────────────────────────────────────────
+# IRSA Role — Fluent Bit
+# Allows Fluent Bit to ship logs to CloudWatch
+# ──────────────────────────────────────────────
+resource "aws_iam_role" "fluent_bit" {
+  name = "${var.project_name}-fluent-bit-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = var.oidc_provider_arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "${var.oidc_provider_url}:sub" = "system:serviceaccount:monitoring:fluent-bit"
+            "${var.oidc_provider_url}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-fluent-bit-role"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_role_policy" "fluent_bit" {
+  name = "${var.project_name}-fluent-bit-cloudwatch"
+  role = aws_iam_role.fluent_bit.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams",
+          "logs:DescribeLogGroups"
+        ]
+        Resource = "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/taskflow/*"
+      }
+    ]
+  })
+}

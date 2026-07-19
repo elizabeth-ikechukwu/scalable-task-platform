@@ -49,12 +49,12 @@ resource "helm_release" "kube_prometheus_stack" {
           retention = "3d"
           resources = {
             requests = {
-              memory = "128Mi"
-              cpu    = "50m"
+              memory = "256Mi"
+              cpu    = "100m"
             }
             limits = {
-              memory = "256Mi"
-              cpu    = "200m"
+              memory = "512Mi"
+              cpu    = "300m"
             }
           }
         }

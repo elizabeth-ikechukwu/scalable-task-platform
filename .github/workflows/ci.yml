@@ -71,6 +71,7 @@ jobs:
           push: false
           load: true
           tags: task-backend:ci
+          no-cache: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build frontend image

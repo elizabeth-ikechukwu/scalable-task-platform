@@ -6,3 +6,10 @@ CVE-2026-48815
 
 # undici - built into Node.js binary, patched in future Node.js release
 CVE-2026-12151
+
+# tar - transitive dependency of npm/Node.js tooling, no clean fix available yet, DoS-only risk
+CVE-2026-59873
+CVE-2026-59874
+
+# brace-expansion - transitive dependency, DoS-only risk, ignore-unfixed already covers where fix exists
+CVE-2026-13149

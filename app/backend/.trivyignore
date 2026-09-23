@@ -11,5 +11,26 @@ CVE-2026-12151
 CVE-2026-59873
 CVE-2026-59874
 
-# brace-expansion - transitive dependency, DoS-only risk, ignore-unfixed already covers where fix exists
+# brace-expansion - transitive dependency, DoS-only risk
 CVE-2026-13149
+
+# ---------------------------------------------------------------------------
+# npm toolchain CVEs from the Node base image (node-pkg), not app dependencies.
+# npm ships in the image but never runs at runtime; the container starts node
+# directly. Reviewed 2026-09-23. Revisit when the base image is bumped.
+# ---------------------------------------------------------------------------
+
+# brace-expansion - DoS via memory exhaustion in expand()
+CVE-2026-14257
+
+# brace-expansion - DoS via unbounded arrays, bypasses the CVE-2026-14257 mitigation
+CVE-2026-69152
+
+# ip-address - SSRF via inconsistent IP parsing, npm transitive dep
+CVE-2026-69192
+
+# pacote - npm's package fetcher, not invoked at runtime
+CVE-2026-9496
+
+# tar - DoS via crafted long-path archive, npm transitive dep
+CVE-2026-73566

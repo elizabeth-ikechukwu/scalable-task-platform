@@ -1,14 +1,17 @@
 # TaskFlow -- Scalable Task Platform
 
-A production-grade DevOps project documenting the full lifecycle of a task management application - from a simple backend API to a fully containerized, orchestrated, monitored, cloud-native SaaS platform running on Kubernetes.
+A production-grade DevOps project documenting the full lifecycle of a task management application - from a simple backend API to a fully containerized, orchestrated, monitored, cloud-native SaaS platform on Kubernetes.
 
 Built in public, one week at a time.
 
-**Live:** https://thetaskflowapp.online
-**ArgoCD:** https://argocd.thetaskflowapp.online
-**Grafana:** https://grafana.thetaskflowapp.online
-**Prometheus:** https://prometheus.thetaskflowapp.online
+**Live demo:** https://thetaskflowapp.online
 **Repo:** https://github.com/elizabeth-ikechukwu/scalable-task-platform
+
+> **Current state:** the EKS cluster is torn down to keep running costs at zero.
+> The live URL serves the same container images from a single EC2 instance with
+> Docker Compose. All Kubernetes manifests and the eight Terraform modules are in
+> this repo, and `terraform apply` recreates the full platform, including the
+> ArgoCD, Grafana and Prometheus endpoints below.
 
 ---
 
@@ -159,7 +162,7 @@ Every credential the backend needs -- database host, username, password, JWT sec
 
 ### GitOps With ArgoCD
 
-ArgoCD is installed via Helm and bootstrapped with a single Application manifest (`bootstrap/taskflow-application.yaml`) watching the `k8s/` directory on `main` with `directory.recurse: true`. Sync policy is fully automated:
+ArgoCD runs at `https://argocd.thetaskflowapp.online` when the cluster is running. It is installed via Helm and bootstrapped with a single Application manifest (`bootstrap/taskflow-application.yaml`) watching the `k8s/` directory on `main` with `directory.recurse: true`. Sync policy is fully automated:
 
 ```yaml
 syncPolicy:
@@ -198,7 +201,7 @@ Deployed via the `kube-prometheus-stack` Helm chart, managed entirely through Te
 - Node-level metrics via node-exporter
 - Kubernetes API server and CoreDNS dashboards
 
-Access at `https://grafana.thetaskflowapp.online`
+Access at `https://grafana.thetaskflowapp.online` when the cluster is running.
 
 ### Fluent Bit
 
@@ -206,7 +209,7 @@ Runs as a DaemonSet -- one pod per node -- shipping every container's logs to Cl
 
 ### Prometheus Direct Access
 
-Available at `https://prometheus.thetaskflowapp.online` for querying raw metrics and viewing scrape target health under Status → Targets.
+Available at `https://prometheus.thetaskflowapp.online`, when the cluster is running, for querying raw metrics and viewing scrape target health under Status → Targets.
 
 ---
 
